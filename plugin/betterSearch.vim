@@ -12,7 +12,7 @@
 "              obligation to maintain or extend this software. It is provided on an
 "              "as is" basis without any expressed or implied warranty.
 " ============================================================================
-let s:betterSearch_version = '0.0.1'
+let s:betterSearch_version = '0.0.2'
 
 " initialization {{{
 
@@ -30,8 +30,10 @@ let s:content_window_nr = 0
 let s:isHighlightOn = 1
 let s:isCopyToClipboard = 0
 let s:search_token_copy = []
-let s:pattern_name = ['String', 'Number', 'Function', 'Keyword', 'Directory', 'Type', 'rubyRegexpDelimiter', 'PmenuSel', 'MatchParen', 'rubyStringDelimiter', 'javaDocSeeTag']
-" content window and search window mapping, for the use of switching between 
+let s:pattern_name = ['String', 'Number', 'Function', 'Keyword', 'Directory',
+                     \'Type', 'rubyRegexpDelimiter', 'PmenuSel', 'MatchParen',
+                     \'rubyStringDelimiter', 'javaDocSeeTag']
+" content window and search window mapping, for the use of switching between
 " window
 let s:win_mapping = {}
 
@@ -42,6 +44,7 @@ command! -n=0 -bar BetterSearchSwitchWin :call s:SwitchBetweenWin()
 command! -n=1 -bar BetterSearchHighlightLimit :let g:BetterSearchTotalLine=<args>
 command! -n=0 -bar BetterSearchHighlighToggle :let s:isHighlightOn=!s:isHighlightOn
 command! -n=0 -bar BetterSearchCopyToClipBoard :let s:isCopyToClipboard=!s:isCopyToClipboard
+command! -n=* -bar BetterSearchChangeHighlight :call s:SetHighlightName(<f-args>)
 
 function s:SetDefaultVariable(name, default)
     if !exists(a:name)
@@ -49,14 +52,22 @@ function s:SetDefaultVariable(name, default)
     endif
 endfunction
 
-call s:SetDefaultVariable("g:BetterSearchMapHelp", "?")
-call s:SetDefaultVariable("g:BetterSearchMapHighlightSearch", "h")
+call s:SetDefaultVariable("g:BetterSearchMapHelp", "<F1>")
+call s:SetDefaultVariable("g:BetterSearchMapHighlightSearch", "c")
 call s:SetDefaultVariable("g:BetterSearchTotalLine", 5000)
 
 
 " }}}
 
 " function {{{
+function s:SetHighlightName(index, name)
+    if a:index >= 0 && a:index < len(s:pattern_name)
+        let l:old_name = s:pattern_name[a:index]
+        let s:pattern_name[a:index]=a:name
+        echo "s:pattern_name[".a:index."] change from ".l:old_name. " to ".a:name
+    endif
+endfunction
+
 function s:SwitchBetweenWin()
     let s:current_buf_nr = bufnr("")
     if has_key(s:win_mapping, s:current_buf_nr)
@@ -84,27 +95,57 @@ endfunction
 
 " --- help description ---
 function s:displayHelp()
-    exe "vnew"
+    exe "80vnew"
     setlocal buftype=nofile
     setlocal bufhidden=wipe
     setlocal noswapfile
     setlocal nobuflisted
     exec "nnoremap <silent> <buffer> ". g:BetterSearchMapHelp ." :q<cr>"
 
+    " get the name of the highlight syntax string
+    let l:index = 0
+    let l:pattern_name_text = ""
+    while l:index < len(s:pattern_name)
+        let l:pattern_name_text = l:pattern_name_text.
+                \ "highlight def[".l:index."] = ".s:pattern_name[l:index]."\n"
+        let l:index = l:index + 1
+    endwhile
+
+
     let l:help_text = "Press ". g:BetterSearchMapHelp ." to close this help window\n\n"
-    let l:help_text = l:help_text . "Press <ENTER> on that particular line to jump to the content window.\n"
-    let l:help_text = l:help_text . "':BetterSearchSwitchWin'       - to switch between the 'Search Window' and the 'Content Window'\n"
-    let l:help_text = l:help_text . "':BetterSearchVisualSelect'    - to search based on the visually selected word\n"
-    let l:help_text = l:help_text . "':BetterSearchHighlighToggle'  - to toggle keyword highlight on off (default is on)\n"
-    let l:help_text = l:help_text . "':BetterSearchHighlightLimit'  - to toggle line limit to switch off keyword highlight, for efficiency purpose, \n"
-    let l:help_text = l:help_text . "                               - especially for large matched, default is 5000 line\n"
-    let l:help_text = l:help_text . "':BetterSearchCopyToClipBoard' - to toggle whether to save to the search words to clipboard, default is off\n\n"
-    let l:help_text = l:help_text . "Suggest to map following in .vimrc, e.g: \n"
-    let l:help_text = l:help_text . "nnoremap <A-F7> :BetterSearchPromptOn<CR>\n"
-    let l:help_text = l:help_text . "vnoremap <A-F7> :BetterSearchVisualSelect<CR>\n"
-    let l:help_text = l:help_text . "nnoremap <A-w>  :BetterSearchSwitchWin<CR>\n"
+    let l:help_text = l:help_text 
+        \ . "Press <ENTER> on that particular line to jump to the content window.\n"
+        \ . "':BetterSearchSwitchWin'       \n"
+        \ . "  - to switch between the 'Search Window' and the 'Content Window'\n"
+        \ . "':BetterSearchVisualSelect'    \n"
+        \ . "  - to search based on the visually selected word\n"
+        \ . "':BetterSearchHighlighToggle'  \n"
+        \ . "  - to toggle keyword highlight on off (default is on)\n"
+        \ . "':BetterSearchHighlightLimit'  \n"
+        \ . "  - to toggle line limit to switch off keyword highlight,\n"
+        \ . "    for efficiency purpose, especially for large matched \n"
+        \ . "  - default is 5000 line\n"
+        \ . "':BetterSearchCopyToClipBoard' \n"
+        \ . "  - to toggle whether to save to the search words to clipboard\n"
+        \ . "  - default is off\n"
+        \ . "':BetterSearchChangeHighlight' \n"
+        \ . "  - to change the highlight of the search term (start from index zero '0')\n"
+        \ . "  - e.g to change the highlight of first search term\n"
+        \ . "    :BetterSearchChangeHighlight 0 Directory \n\n"
+        \ . "[ mapping ]\n"
+        \ . "Suggest to map following in .vimrc, e.g: \n"
+        \ . "nnoremap <A-F7> :BetterSearchPromptOn<CR>\n"
+        \ . "vnoremap <A-F7> :BetterSearchVisualSelect<CR>\n"
+        \ . "nnoremap <A-w>  :BetterSearchSwitchWin<CR>\n"
+        \ . "\n\n"
+    let l:help_text = l:help_text
+        \ . "[ highlight ] syntax \n" . l:pattern_name_text
     let @g = l:help_text
     exe "1put! g"
+    if s:isHighlightOn
+        execute 'syn match BetterSearch #:BetterSearch\w\+#'
+        execute "hi link BetterSearch String"
+    endif
     setlocal nomodifiable
 endfunction
 
@@ -217,6 +258,7 @@ function s:BetterSearchPrompt()
             :let @"=mm
         endif
     else
+        "process if user press okay
         if mm != "cancel pressed"
             :exe 'silent call s:BetterSearch(expand("<cword>"))'
         endif
@@ -225,6 +267,11 @@ endfunction
 " }}}
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" History of changes:
+" [ version ] 0.0.2 ( 01 Oct 2012 )
+"   - able to set highlight syntax
+"   - change default shortcut for syntax=c, help=F1
+"   - improve help description
 "                                                                              "
 " vim:foldmethod=marker:tabstop=4
 "                                                                              "
