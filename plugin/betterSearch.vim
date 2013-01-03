@@ -12,7 +12,7 @@
 "              obligation to maintain or extend this software. It is provided on an
 "              "as is" basis without any expressed or implied warranty.
 " ============================================================================
-let s:betterSearch_version = '0.0.3'
+let s:betterSearch_version = '0.0.4'
 
 " initialization {{{
 
@@ -129,8 +129,15 @@ function s:displayHelp()
 
 
     let l:help_text = "Press ". g:BetterSearchMapHelp ." to close this help window\n\n"
-    let l:help_text = l:help_text 
+    let l:help_text = l:help_text
+        \ . "--- [ Navigation ] ---\n"
+        \ . "If the line number is switch on, the search result is jumpable.\n"
         \ . "Press <ENTER> on that particular line to jump to the content window.\n"
+        \ . "note: To enable line number, :nu"
+        \ . "\n\n"
+        \ . ""
+        \ . ""
+        \ . "--- [ supported commanline ] ---\n"
         \ . "':BetterSearchSwitchWin'       \n"
         \ . "  - to switch between the 'Search Window' and the 'Content Window'\n"
         \ . "':BetterSearchVisualSelect'    \n"
@@ -146,24 +153,38 @@ function s:displayHelp()
         \ . "  - default is off\n"
         \ . "':BetterSearchChangeHighlight' \n"
         \ . "  - to change the highlight of the search term (start from index zero '0')\n"
-        \ . "  - e.g to change the highlight of first search term\n"
-        \ . "    :BetterSearchChangeHighlight 0 Directory \n\n"
+        \ . "  - e.g to change the highlight of first search term to 'Directory' highlight\n"
+        \ . "    :BetterSearchChangeHighlight 0 Directory \n"
+        \ . "  - e.g to change the highlight of second search term to 'Keyword' highlight\n"
+        \ . "    :BetterSearchChangeHighlight 1 Keyword \n"
         \ . "':BetterSearchCloseWin' \n"
         \ . "  - to close the betterSearch window\n"
-        \ . "[ mapping ]\n"
+        \ . "\n\n"
+        \ . ""
+        \ . ""
+        \ . "--- [ mapping ] ---\n"
         \ . "Suggest to map following in .vimrc, e.g: \n"
         \ . "nnoremap <A-S-F7> :BetterSearchPromptOn<CR>\n"
         \ . "vnoremap <A-S-F7> :BetterSearchVisualSelect<CR>\n"
         \ . "nnoremap <A-w>    :BetterSearchSwitchWin<CR>\n"
-        \ . "nnoremap <A-S-q>  :BetterSearchCloseWin<CR>"
+        \ . "nnoremap <A-S-q>  :BetterSearchCloseWin<CR>\n"
         \ . "\n\n"
+        \ . ""
+        \ . ""
     let l:help_text = l:help_text
-        \ . "[ highlight ] syntax \n" . l:pattern_name_text
+        \ . "--- [ highlight ] syntax --- \n" . l:pattern_name_text
     let @g = l:help_text
     exe "1put! g"
     if s:isHighlightOn
         execute 'syn match BetterSearch #:BetterSearch\w\+#'
         execute "hi link BetterSearch String"
+        let l:index = 0
+        while index < len(s:pattern_name)
+            execute "syn match search_word".index. " #". s:pattern_name[index] ."#"
+            execute "hi link search_word".index. " ".s:pattern_name[index]
+            let l:index = l:index + 1
+        endwhile
+
     endif
     setlocal nomodifiable
 endfunction
@@ -291,6 +312,9 @@ endfunction
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " History of changes:
+" [ version ] 0.0.4 ( 04 Jan 2013 )
+"   - enhanced help description
+"
 " [ version ] 0.0.3 ( 04 Jan 2013 )
 "   - showed the file path
 "   - added function to close the bettersearch window from anywhere
