@@ -1,5 +1,14 @@
 This is a mirror of http://www.vim.org/scripts/script.php?script_id=4241
 
+** note: currently the script is tested in MS window environment using GVIM **
+** note: BetterSearchVisualSelect command is found not to be working at the moment ** 
+
+Features offered by betterSearch: 
+- This script is written to copy all the search result and put it to window above the content. 
+- If the line number is switch on, the search result is 'jumpable' to the content window by just enter on that particular search line
+- Search term highlight can be switched on and off
+- Search keyword can be saved to clipboard
+
 There are a few way to use the function of this script.
 [ usage 1 ]  
 User intended to type in the search words
@@ -33,6 +42,7 @@ Other command available by the script.
 
 [ mapping ]
 Suggest to map following in .vimrc, e.g: 
-nnoremap <A-F7> :BetterSearchPromptOn<CR>
-vnoremap <A-F7> :BetterSearchVisualSelect<CR>
+nnoremap <A-S-F7> :BetterSearchPromptOn<CR>
+vnoremap <A-S-F7> :BetterSearchVisualSelect<CR>
 nnoremap <A-w>  :BetterSearchSwitchWin<CR>
+nnoremap <A-S-q>  :BetterSearchCloseWin<CR>

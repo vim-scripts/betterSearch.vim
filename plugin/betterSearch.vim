@@ -2,8 +2,8 @@
 " File:        betterSearch.vim
 " Description: provide better search functionality in vim
 " Maintainer:  Ng Khian Nam
-" Email:       ngkhiannam@gmail.com 
-" Last Change: 24 September 2012
+" Email:       ngkhiannam@gmail.com
+" Last Change: 4 Jan 2013
 " License:     We grant permission to use, copy modify, distribute, and sell this
 "              software for any purpose without fee, provided that the above copyright
 "              notice and this text are not removed. We make no guarantee about the
@@ -12,7 +12,7 @@
 "              obligation to maintain or extend this software. It is provided on an
 "              "as is" basis without any expressed or implied warranty.
 " ============================================================================
-let s:betterSearch_version = '0.0.2'
+let s:betterSearch_version = '0.0.3'
 
 " initialization {{{
 
@@ -27,6 +27,9 @@ endif
 let loaded_BetterSearch = 1
 let s:next_buf_number = 1
 let s:content_window_nr = 0
+"bufnr of bettersearch buffer
+let s:bettersearch_window_nr = 0
+let s:content_window_path = ""
 let s:isHighlightOn = 1
 let s:isCopyToClipboard = 0
 let s:search_token_copy = []
@@ -39,11 +42,12 @@ let s:win_mapping = {}
 
 " === command === "
 command! -n=0 -bar BetterSearchPromptOn :call s:BetterSearchPrompt()
-command! -n=0 -bar BetterSearchVisualSelect :exe "normal! gvy" <CR> :call s:BetterSearch("<C-R>"")
+command! -n=0 -bar -range BetterSearchVisualSelect :call s:VisualSearch()
 command! -n=0 -bar BetterSearchSwitchWin :call s:SwitchBetweenWin()
 command! -n=1 -bar BetterSearchHighlightLimit :let g:BetterSearchTotalLine=<args>
 command! -n=0 -bar BetterSearchHighlighToggle :let s:isHighlightOn=!s:isHighlightOn
 command! -n=0 -bar BetterSearchCopyToClipBoard :let s:isCopyToClipboard=!s:isCopyToClipboard
+command! -n=0 -bar BetterSearchCloseWin :call s:CloseBetterSearchWin()
 command! -n=* -bar BetterSearchChangeHighlight :call s:SetHighlightName(<f-args>)
 
 function s:SetDefaultVariable(name, default)
@@ -60,6 +64,18 @@ call s:SetDefaultVariable("g:BetterSearchTotalLine", 5000)
 " }}}
 
 " function {{{
+function s:CloseBetterSearchWin()
+    if s:bettersearch_window_nr != 0
+        exe s:bettersearch_window_nr."bwipeout"
+    endif
+endfunction
+
+function s:VisualSearch() range
+    execute "normal! gv""y"
+    let l:temp = @"
+    :silent! call s:BetterSearch(l:temp)
+endfunction
+
 function s:SetHighlightName(index, name)
     if a:index >= 0 && a:index < len(s:pattern_name)
         let l:old_name = s:pattern_name[a:index]
@@ -132,11 +148,14 @@ function s:displayHelp()
         \ . "  - to change the highlight of the search term (start from index zero '0')\n"
         \ . "  - e.g to change the highlight of first search term\n"
         \ . "    :BetterSearchChangeHighlight 0 Directory \n\n"
+        \ . "':BetterSearchCloseWin' \n"
+        \ . "  - to close the betterSearch window\n"
         \ . "[ mapping ]\n"
         \ . "Suggest to map following in .vimrc, e.g: \n"
-        \ . "nnoremap <A-F7> :BetterSearchPromptOn<CR>\n"
-        \ . "vnoremap <A-F7> :BetterSearchVisualSelect<CR>\n"
-        \ . "nnoremap <A-w>  :BetterSearchSwitchWin<CR>\n"
+        \ . "nnoremap <A-S-F7> :BetterSearchPromptOn<CR>\n"
+        \ . "vnoremap <A-S-F7> :BetterSearchVisualSelect<CR>\n"
+        \ . "nnoremap <A-w>    :BetterSearchSwitchWin<CR>\n"
+        \ . "nnoremap <A-S-q>  :BetterSearchCloseWin<CR>"
         \ . "\n\n"
     let l:help_text = l:help_text
         \ . "[ highlight ] syntax \n" . l:pattern_name_text
@@ -157,7 +176,7 @@ function s:HighlightSearchWord()
     call s:BetterSearchSyntaxHighlight(s:search_token_copy)
 endfunction
 
-" --- for search highlight toggle 
+" --- for search highlight toggle
 function s:BetterSearchSyntaxHighlight(search_token)
     execute "syn match helpText #Press ". g:BetterSearchMapHelp ." for help#"
     execute "hi link helpText Comment"
@@ -215,8 +234,11 @@ function s:BetterSearch(...)
 	else
 		let str=expand("<cword>")
 	endif
+
+    let s:content_window_path = expand("%:p")
 	" clear register g
 	let @g="\"  Press ". g:BetterSearchMapHelp ." for help\n\n"
+    let @g=@g."content path : ". s:content_window_path. "\n"
 	let @g=@g."search term: \n". ori_str."\n\n"
 	" redirect global search output to register g
 	silent exe "redir @g>>"
@@ -235,8 +257,9 @@ function s:BetterSearch(...)
         setlocal noswapfile
         setlocal nobuflisted
         call s:BetterSearchBindMapping()
-        let s:win_mapping[s:content_window_nr]=bufnr("")
-        let s:win_mapping[bufnr("")]=s:content_window_nr
+        let s:bettersearch_window_nr = bufnr("")
+        let s:win_mapping[s:content_window_nr]=s:bettersearch_window_nr
+        let s:win_mapping[s:bettersearch_window_nr]=s:content_window_nr
 
     endif
     " paste the content of register g before line 1
@@ -268,6 +291,11 @@ endfunction
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " History of changes:
+" [ version ] 0.0.3 ( 04 Jan 2013 )
+"   - showed the file path
+"   - added function to close the bettersearch window from anywhere
+"   - fixed visual select search
+"
 " [ version ] 0.0.2 ( 01 Oct 2012 )
 "   - able to set highlight syntax
 "   - change default shortcut for syntax=c, help=F1
