@@ -12,7 +12,7 @@
 "              obligation to maintain or extend this software. It is provided on an
 "              "as is" basis without any expressed or implied warranty.
 " ============================================================================
-let s:betterSearch_version = '0.0.4'
+let s:betterSearch_version = '0.0.5'
 
 " initialization {{{
 
@@ -95,10 +95,14 @@ function s:SwitchBetweenWin()
 endfunction
 
 function s:GoToLine()
-    let lineNum = matchstr(getline("."), '^ *[[:digit:]]\+')
-    if lineNum != ""
-        call s:SwitchBetweenWin()
-        exe ":".lineNum
+    let isMagic = &magic
+    set nomagic
+    let str = getline(".")
+    let str = substitute(str, '\$', '\\\$', "g")
+    call s:SwitchBetweenWin()
+    exe "silent /".str
+    if (isMagic)
+        set magic
     endif
 endfunction
 
@@ -131,9 +135,7 @@ function s:displayHelp()
     let l:help_text = "Press ". g:BetterSearchMapHelp ." to close this help window\n\n"
     let l:help_text = l:help_text
         \ . "--- [ Navigation ] ---\n"
-        \ . "If the line number is switch on, the search result is jumpable.\n"
         \ . "Press <ENTER> on that particular line to jump to the content window.\n"
-        \ . "note: To enable line number, :nu"
         \ . "\n\n"
         \ . ""
         \ . ""
@@ -311,6 +313,10 @@ endfunction
 " }}}
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" History of changes:
+" [ version ] 0.0.5 ( 02 Mar 2014 )
+"   - enable [Enter] to jump to particular line without line number switched on
+
 " History of changes:
 " [ version ] 0.0.4 ( 04 Jan 2013 )
 "   - enhanced help description

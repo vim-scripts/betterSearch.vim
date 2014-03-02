@@ -1,7 +1,15 @@
 This is a mirror of http://www.vim.org/scripts/script.php?script_id=4241
 
-** note: currently the script is tested in MS window environment using GVIM **
-** note: BetterSearchVisualSelect command is found not to be working at the moment ** 
+** note: tested in Linux/MS window environment using GVIM **
+** note: BetterSearchVisualSelect command is found working in Linux, but might not working in MS Window environment at the moment ** 
+
+Problem: 
+Having a large file and you need to search for a few keywords from it? 
+And wish that you can at once glance all the search result? 
+Best with highlight on the keyword? 
+And you would wish to jump to that particular line when you see something interesting?
+Here is a good news for you! : )
+Solution approach: works somewhat similarly to notepad++ search function
 
 Features offered by betterSearch: 
 - This script is written to copy all the search result and put it to window above the content. 
@@ -23,7 +31,8 @@ User intended to use the word under the cursor as the search term
 then <ENTER>. and press <ENTER> again when the user input dialog box appear without type in any word
 
 [ usage 3 ] 
-User intended to user the word highlighted in visual mode
+User intended to use the word highlighted in visual mode
+Hightlight the word, then type
 :BetterSearchVisualSelect
 then <ENTER>. 
 
@@ -32,7 +41,7 @@ A search window will be open up on top of the current window.
 Press <ENTER> on that particular line to jump to the content window.
 
 [ other commands ]
-Other command available by the script.
+Other command available by the script. (or press F1 when the focus/cursor is at the search window)
 ':BetterSearchSwitchWin'        - to switch between the 'Search Window' and the 'Content Window'
 ':BetterSearchVisualSelect'     - to search based on the visually selected word
 ':BetterSearchHighlighToggle'   - to toggle keyword highlight on off (default is on)
