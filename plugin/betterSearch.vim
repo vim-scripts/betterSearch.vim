@@ -38,10 +38,28 @@ let s:bettersearch_window_nr = 0
 let s:content_window_path = ""
 let s:isHighlightOn = 1
 let s:isCopyToClipboard = 0
+let s:syn_case = &ignorecase ? " ignore " : " match "
 let s:search_token_copy = []
-let s:pattern_name = ['PmenuSel', 'Number', 'Function', 'Keyword', 'Directory',
-                     \'Type', 'rubyRegexpDelimiter', 'String', 'MatchParen',
-                     \'rubyStringDelimiter', 'javaDocSeeTag']
+
+hi def BetterSearchH0  guifg=Yellow  guibg=black     gui=bold  ctermfg=14    ctermbg=0     cterm=bold
+hi def BetterSearchH1  guifg=#FF8000 guibg=black     gui=bold  ctermfg=NONE  ctermbg=NONE  cterm=NONE
+hi def BetterSearchH2  guifg=#FF0000 guibg=black     gui=bold  ctermfg=NONE  ctermbg=NONE  cterm=NONE
+hi def BetterSearchH3  guifg=#8F00FF guibg=black     gui=bold  ctermfg=NONE  ctermbg=NONE  cterm=NONE
+hi def BetterSearchH4  guifg=#3E8131 guibg=black     gui=bold  ctermfg=NONE  ctermbg=NONE  cterm=NONE
+hi def BetterSearchH5  guifg=#A42D7D guibg=black     gui=bold  ctermfg=NONE  ctermbg=NONE  cterm=NONE
+hi def BetterSearchH6  guifg=#3E8187 guibg=black     gui=bold  ctermfg=NONE  ctermbg=NONE  cterm=NONE
+hi def BetterSearchH7  guifg=black   guibg=#cae682   gui=bold  ctermfg=NONE  ctermbg=NONE  cterm=NONE
+hi def BetterSearchH8  guifg=black   guibg=#FF6C60   gui=bold  ctermfg=NONE  ctermbg=NONE  cterm=NONE
+hi def BetterSearchH9  guifg=black   guibg=#2E58BE   gui=bold  ctermfg=NONE  ctermbg=NONE  cterm=NONE
+hi def BetterSearchH10 guifg=black   guibg=#631E89   gui=bold  ctermfg=NONE  ctermbg=NONE  cterm=NONE
+
+
+let g:BetterSearchhighlight = [ 'BetterSearchH0', 'BetterSearchH1',
+                      \ 'BetterSearchH2', 'BetterSearchH3', 'BetterSearchH4',
+                      \ 'BetterSearchH5', 'BetterSearchH6', 'BetterSearchH7',
+                      \ 'BetterSearchH8', 'BetterSearchH9', 'BetterSearchH10' ]
+
+
 " content window and search window mapping, for the use of switching between
 " window
 let s:win_mapping = {}
@@ -51,7 +69,7 @@ command! -n=0 -bar BetterSearchPromptOn :call s:BetterSearchPrompt()
 command! -n=0 -bar -range BetterSearchVisualSelect :call s:VisualSearch()
 command! -n=0 -bar BetterSearchSwitchWin :call s:SwitchBetweenWin()
 command! -n=1 -bar BetterSearchHighlightLimit :let g:BetterSearchTotalLine=<args>
-command! -n=0 -bar BetterSearchHighlighToggle :let s:isHighlightOn=!s:isHighlightOn
+command! -n=0 -bar BetterSearchHighlighToggle :let s:isHighlightOn=!s:isHighlightOn | echo "BetterSearchHighlight is now ".(s:isHighlightOn? "on" : "off")
 command! -n=0 -bar BetterSearchCopyToClipBoard :let s:isCopyToClipboard=!s:isCopyToClipboard
 command! -n=0 -bar BetterSearchCloseWin :call s:CloseBetterSearchWin()
 command! -n=* -bar BetterSearchChangeHighlight :call s:SetHighlightName(<f-args>)
@@ -83,10 +101,10 @@ function s:VisualSearch() range
 endfunction
 
 function s:SetHighlightName(index, name)
-    if a:index >= 0 && a:index < len(s:pattern_name)
-        let l:old_name = s:pattern_name[a:index]
-        let s:pattern_name[a:index]=a:name
-        echo "s:pattern_name[".a:index."] change from ".l:old_name. " to ".a:name
+    if a:index >= 0 && a:index < len(g:BetterSearchhighlight)
+        let l:old_name = g:BetterSearchhighlight[a:index]
+        let g:BetterSearchhighlight[a:index]=a:name
+        echo "g:BetterSearchhighlight[".a:index."] change from ".l:old_name. " to ".a:name
     endif
 endfunction
 
@@ -101,21 +119,10 @@ function s:SwitchBetweenWin()
 endfunction
 
 function s:GoToLine()
-    let isMagic = &magic
-    set magic
-    let str = getline(".")
-    call s:SwitchBetweenWin()
-    "let s:oldSearch = @/
-    "keeppatterns exe "silent /".str
-    "let @/ = s:oldSearch
-    "using \V very nomagic
-    let line = search('\V'.str)
-    if 0 == line
-        echom "search not found: ". str
-        let @/=str
-    endif
-    if (!isMagic)
-        set nomagic
+    let lineNum = matchstr(getline("."), '^ *[[:digit:]]\+')
+    if lineNum != ""
+        call s:SwitchBetweenWin()
+        exe ":".lineNum
     endif
 endfunction
 
@@ -138,9 +145,10 @@ function s:displayHelp()
     " get the name of the highlight syntax string
     let l:index = 0
     let l:pattern_name_text = ""
-    while l:index < len(s:pattern_name)
+    while l:index < len(g:BetterSearchhighlight)
         let l:pattern_name_text = l:pattern_name_text.
-                \ "highlight def[".l:index."] = ".s:pattern_name[l:index]."\n"
+                \ "g:BetterSearchhighlight".l:index." = "
+                \ .g:BetterSearchhighlight[l:index]."\n"
         let l:index = l:index + 1
     endwhile
 
@@ -169,9 +177,10 @@ function s:displayHelp()
         \ . "':BetterSearchChangeHighlight' \n"
         \ . "  - to change the highlight of the search term (start from index zero '0')\n"
         \ . "  - e.g to change the highlight of first search term to 'Directory' highlight\n"
-        \ . "    :BetterSearchChangeHighlight 0 Directory \n"
-        \ . "  - e.g to change the highlight of second search term to 'Keyword' highlight\n"
-        \ . "    :BetterSearchChangeHighlight 1 Keyword \n"
+        \ . "    :let g:BetterSearchhighlight[0] = 'Directory' \n"
+        \ . "  - e.g to change the highlight of second search term to 'BetterSearchHighlight10' highlight\n"
+        \ . "    :let g:BetterSearchhighlight[1] = 'BetterSearchHighlight10' \n"
+        \ . "  - default maximum definable highlight is 11 (That's really more than enough! ;)"
         \ . "':BetterSearchCloseWin' \n"
         \ . "  - to close the betterSearch window\n"
         \ . "\n\n"
@@ -196,9 +205,9 @@ function s:displayHelp()
         execute 'syn match BetterSearch #:BetterSearch\w\+#'
         execute "hi link BetterSearch String"
         let l:index = 0
-        while index < len(s:pattern_name)
-            execute "syn match search_word".index. " #". s:pattern_name[index] ."#"
-            execute "hi link search_word".index. " ".s:pattern_name[index]
+        while index < len(g:BetterSearchhighlight)
+            execute "syn match BetterSearchhighlight".index. " #". g:BetterSearchhighlight[index] ."#"
+            execute "hi link BetterSearchhighlight".index. " ".g:BetterSearchhighlight[index]
             let l:index = l:index + 1
         endwhile
 
@@ -218,22 +227,29 @@ endfunction
 function s:BetterSearchSyntaxHighlight(search_token)
     execute "syn match helpText #Press ". g:BetterSearchMapHelp ." for help#"
     execute "hi link helpText Comment"
+    execute "syn match line_number #^ *[0-9]\* #"
+    execute "hi link line_number LineNr"
+
     let l:index = 0
+    " --- if total line of search result is less than g:BetterSearchTotalLine
     if s:isHighlightOn && (line('$') < g:BetterSearchTotalLine)
         echo "search highlight on"
         while index < len(a:search_token)
-            if (index < len(s:pattern_name))
-                execute "syn match search_word".index. " #". a:search_token[index] ."#"
-                execute "hi link search_word".index. " ".s:pattern_name[index]
+            " --- if total search_token is less than what we can color
+            if (index < len(g:BetterSearchhighlight))
+                " --- define highlight pattern, e.g. syn match search_word[n] <pattern>
+                execute "syn case ".s:syn_case
+                execute "syn  match BetterSearchhighlight".index." #". a:search_token[index] ."#"
+                execute "hi link BetterSearchhighlight".index. " ".g:BetterSearchhighlight[index]
                 let l:index = l:index + 1
             endif
         endwhile
     elseif !s:isHighlightOn
         echo "search highlight off"
         while index < len(a:search_token)
-            if (index < len(s:pattern_name))
+            if (index < len(g:BetterSearchhighlight))
                 "execute "syn match search_word".index. " #". a:search_token[index] ."#"
-                execute "hi link search_word".index. " Normal"
+                execute "hi link BetterSearchhighlight".index. " Normal"
                 let l:index = l:index + 1
             endif
         endwhile
@@ -282,10 +298,14 @@ function s:BetterSearch(...)
 	" clear register g
     let s:oldContent = @g
     let s:oldnumber = &number
-    set nonumber
+    let s:syn_case = &ignorecase ? " ignore " : " match "
+    set number
 	let @g="\"  Press ". g:BetterSearchMapHelp ." for help\n\n"
     let @g=@g."content path : ". s:content_window_path. "\n"
 	let @g=@g."search term: \n". ori_str."\n\n"
+    let @g=@g."================================================================================\n"
+    let @g=@g."Line                         Result\n"
+    let @g=@g."================================================================================"
 	" redirect global search output to register g
 	silent exe "redir @g>>"
 	silent exe "g /". str
@@ -303,6 +323,7 @@ function s:BetterSearch(...)
         setlocal bufhidden=wipe
         setlocal noswapfile
         setlocal nobuflisted
+        setlocal nonumber
         call s:BetterSearchBindMapping()
         let s:bettersearch_window_nr = bufnr("")
         let s:win_mapping[s:content_window_nr]=s:bettersearch_window_nr
@@ -339,6 +360,14 @@ endfunction
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " History of changes:
+"
+" [ version ] 0.0.9 ( 20 Apr 2014 )
+"   - use custom define highlight
+"   - highlighter now able to highlight according to option ignorecase
+"
+" [ version ] 0.0.8 ( 8 Apr 2014 )
+"   - revert function gotoLine() as it is easy and accurate
+"   - added highlight for line number in the result
 "
 " [ version ] 0.0.7 ( 29 Mar 2014 )
 "   - fixed bug not able to jump to line when line number is switched on

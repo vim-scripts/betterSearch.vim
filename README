@@ -1,5 +1,9 @@
 This is a mirror of http://www.vim.org/scripts/script.php?script_id=4241
 
+This script will now only updated @ github
+You may get it from 
+https://github.com/kenng/vim-bettersearch
+
 ** note: tested in Linux/MS window environment using GVIM **
 ** note: BetterSearchVisualSelect command is found working in Linux, but might not working in MS Window environment at the moment ** 
 
